@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Cell } from "./Cell";
 import "./Game.css";
 
@@ -12,32 +12,7 @@ export function ChainReactionGame({ rows, cols, gameId, isOffline }) {
   const [winner, setWinner] = useState(null);
   const [isWaiting, setIsWaiting] = useState(false);
 
-  useEffect(() => {
-    if (gameId && !isOffline) {
-      joinGame();
-    } else {
-      initializeLocalGame();
-    }
-  }, [gameId, isOffline]);
-
-  const joinGame = async () => {
-    try {
-      const response = await fetch(`${API_URL}/join-game`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gameId }),
-      });
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
-      setPlayerId(data.playerId);
-      fetchGameState();
-      longPollGameState();
-    } catch (error) {
-      console.error("Error joining game:", error);
-    }
-  };
-
-  const initializeLocalGame = () => {
+  const initializeLocalGame = useCallback(() => {
     const initialGrid = Array(rows)
       .fill(null)
       .map(() =>
@@ -48,9 +23,9 @@ export function ChainReactionGame({ rows, cols, gameId, isOffline }) {
     setCurrentPlayer(1);
     setGameOver(false);
     setWinner(null);
-  };
+  }, [rows, cols]);
 
-  const fetchGameState = async () => {
+  const fetchGameState = useCallback(async () => {
     try {
       const response = await fetch(`${API_URL}/game-state/${gameId}`);
       const data = await response.json();
@@ -61,9 +36,9 @@ export function ChainReactionGame({ rows, cols, gameId, isOffline }) {
     } catch (error) {
       console.error("Error fetching game state:", error);
     }
-  };
+  }, [gameId]);
 
-  const longPollGameState = async () => {
+  const longPollGameState = useCallback(async () => {
     while (!gameOver) {
       try {
         const response = await fetch(`${API_URL}/wait-for-update/${gameId}`);
@@ -77,19 +52,44 @@ export function ChainReactionGame({ rows, cols, gameId, isOffline }) {
         console.error("Long polling error:", error);
       }
     }
-  };
+  }, [gameOver, gameId]);
+
+  const joinGame = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_URL}/join-game`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gameId }),
+      });
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+
+      setPlayerId(data.playerId);
+      await fetchGameState();
+      await longPollGameState();
+    } catch (error) {
+      console.error("Error joining game:", error);
+    }
+  }, [gameId, fetchGameState, longPollGameState]);
+
+  useEffect(() => {
+    if (gameId && !isOffline) {
+      joinGame();
+    } else {
+      initializeLocalGame();
+    }
+  }, [gameId, isOffline, joinGame, initializeLocalGame]);
 
   const sendMoveToServer = async (row, col) => {
     if (gameOver || isWaiting || currentPlayer !== playerId) return;
 
     setIsWaiting(true);
     try {
-      const response = await fetch(`${API_URL}/move`, {
+      await fetch(`${API_URL}/move`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ gameId, row, col, player: playerId }),
       });
-      await response.json();
     } catch (error) {
       console.error("Error sending move:", error);
     }
@@ -107,12 +107,75 @@ export function ChainReactionGame({ rows, cols, gameId, isOffline }) {
 
   const handleLocalMove = (row, col) => {
     if (gameOver) return;
+
     const newGrid = JSON.parse(JSON.stringify(grid));
+
     if (newGrid[row][col].owner !== null && newGrid[row][col].owner !== currentPlayer) return;
+
     newGrid[row][col].value++;
     newGrid[row][col].owner = currentPlayer;
+
+    resolveExplosions(newGrid);
+
     setGrid(newGrid);
     setCurrentPlayer(currentPlayer === 1 ? 2 : 1);
+  };
+
+  const resolveExplosions = (newGrid) => {
+    let hasExploded = true;
+
+    while (hasExploded) {
+      hasExploded = false;
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const cell = newGrid[r][c];
+          const maxCapacity = getMaxCapacity(r, c);
+
+          if (cell.value >= maxCapacity) {
+            hasExploded = true;
+            cell.value -= maxCapacity;
+
+            const neighbors = getNeighbors(r, c);
+            neighbors.forEach(([nr, nc]) => {
+              newGrid[nr][nc].value++;
+              newGrid[nr][nc].owner = cell.owner;
+            });
+
+            checkGameOver(newGrid);
+          }
+        }
+      }
+    }
+  };
+
+  const getMaxCapacity = (r, c) => {
+    let maxCapacity = 4;
+    if (r === 0 || r === rows - 1) maxCapacity--;
+    if (c === 0 || c === cols - 1) maxCapacity--;
+    return maxCapacity;
+  };
+
+  const getNeighbors = (r, c) => {
+    const directions = [
+      [-1, 0], [1, 0], [0, -1], [0, 1]
+    ];
+    return directions
+      .map(([dr, dc]) => [r + dr, c + dc])
+      .filter(([nr, nc]) => nr >= 0 && nr < rows && nc >= 0 && nc < cols);
+  };
+
+  const checkGameOver = (newGrid) => {
+    const playerCells = new Set();
+    for (let row of newGrid) {
+      for (let cell of row) {
+        if (cell.owner !== null) playerCells.add(cell.owner);
+      }
+    }
+    if (playerCells.size === 1) {
+      setGameOver(true);
+      setWinner([...playerCells][0]);
+    }
   };
 
   return (
