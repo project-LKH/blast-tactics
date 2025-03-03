@@ -1,8 +1,8 @@
 
 import { useState } from "react"
-import { ChainReactionGame } from "./components/Game"
+import { ChainReactionGame } from "./Game"
 
-const API_URL = "https://blast-tactics-backend.vercel.app/"
+const API_URL = "https://blast-tactics-backend.vercel.app"
 
 export default function Home() {
   const [gameId, setGameId] = useState(null)
