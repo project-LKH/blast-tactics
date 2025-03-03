@@ -1,10 +1,10 @@
 {
   "files": {
-    "main.css": "/project-LKH/blast-tactics/static/css/main.70662c73.css",
-    "main.js": "/project-LKH/blast-tactics/static/js/main.09bc06df.js",
-    "index.html": "/project-LKH/blast-tactics/index.html",
-    "main.70662c73.css.map": "/project-LKH/blast-tactics/static/css/main.70662c73.css.map",
-    "main.09bc06df.js.map": "/project-LKH/blast-tactics/static/js/main.09bc06df.js.map"
+    "main.css": "/blast-tactics/static/css/main.70662c73.css",
+    "main.js": "/blast-tactics/static/js/main.09bc06df.js",
+    "index.html": "/blast-tactics/index.html",
+    "main.70662c73.css.map": "/blast-tactics/static/css/main.70662c73.css.map",
+    "main.09bc06df.js.map": "/blast-tactics/static/js/main.09bc06df.js.map"
   },
   "entrypoints": [
     "static/css/main.70662c73.css",
