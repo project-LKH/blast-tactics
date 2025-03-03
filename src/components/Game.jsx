@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { Cell } from "./Cell"
 import "./Game.css"
 
-const API_URL = "http://localhost:5000" // Change for deployment
+const API_URL = "https://blast-tactics-backend.vercel.app" // Change for deployment
 
 export function ChainReactionGame({ rows, cols, gameId }) {
   const [grid, setGrid] = useState([])
