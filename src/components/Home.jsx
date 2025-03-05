@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { OnlineGame } from "./OnlineGame"; // Assume this is your OnlineGame component
 import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = "your-supabase-url";
-const SUPABASE_ANON_KEY = "your-supabase-anon-key";
+const SUPABASE_URL = "https://wcxzsrbcpveavqyigoyb.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndjeHpzcmJjcHZlYXZxeWlnb3liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDExNjc2MzAsImV4cCI6MjA1Njc0MzYzMH0.4O2UgxYCBE6H-LYrU4CFmAlCSvbdz7ZvFtAjDAEapS4";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export function Home() {
