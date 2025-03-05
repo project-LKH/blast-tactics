@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/blast-tactics/static/css/main.03b8e46a.css",
-    "main.js": "/blast-tactics/static/js/main.8986f47f.js",
+    "main.js": "/blast-tactics/static/js/main.0807090f.js",
     "static/js/952.ad2fe050.chunk.js": "/blast-tactics/static/js/952.ad2fe050.chunk.js",
     "index.html": "/blast-tactics/index.html",
     "main.03b8e46a.css.map": "/blast-tactics/static/css/main.03b8e46a.css.map",
-    "main.8986f47f.js.map": "/blast-tactics/static/js/main.8986f47f.js.map",
+    "main.0807090f.js.map": "/blast-tactics/static/js/main.0807090f.js.map",
     "952.ad2fe050.chunk.js.map": "/blast-tactics/static/js/952.ad2fe050.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.03b8e46a.css",
-    "static/js/main.8986f47f.js"
+    "static/js/main.0807090f.js"
   ]
 }
