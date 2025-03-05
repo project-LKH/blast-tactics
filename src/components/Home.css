@@ -1,0 +1,80 @@
+/* Home Component Styles */
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    gap: 1rem;
+    font-family: Arial, sans-serif;
+  }
+  
+  .title {
+    font-size: 2rem;
+    font-weight: bold;
+  }
+  
+  .error {
+    color: red;
+    font-weight: bold;
+  }
+  
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.3s ease;
+  }
+  
+  .create-btn {
+    background-color: blue;
+    color: white;
+  }
+  
+  .join-btn {
+    background-color: green;
+    color: white;
+  }
+  
+  .offline-btn {
+    background-color: gray;
+    color: white;
+  }
+  
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .join-container {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .input {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  .waiting-container {
+    text-align: center;
+  }
+  
+  .game-id {
+    font-weight: bold;
+    font-size: 1.2rem;
+  }
+  
+  .copy-btn {
+    background-color: orange;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+  

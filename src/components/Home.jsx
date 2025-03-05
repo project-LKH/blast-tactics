@@ -1,110 +1,102 @@
-import { useState, useEffect } from "react";
-import { ChainReactionGame } from "./Game";
+import { useState, useEffect, useCallback } from "react";
+import { OnlineGame } from "./OnlineGame"; // Assume this is your OnlineGame component
+import { createClient } from "@supabase/supabase-js";
 
-const API_URL = "https://blast-tactics-backend.vercel.app";
+const SUPABASE_URL = "your-supabase-url";
+const SUPABASE_ANON_KEY = "your-supabase-anon-key";
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-export default function Home() {
+export function Home() {
   const [gameId, setGameId] = useState(null);
-  const [inputGameId, setInputGameId] = useState("");
-  const [isOffline, setIsOffline] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [waitingForPlayer, setWaitingForPlayer] = useState(false);
-  const [playerJoined, setPlayerJoined] = useState(false);
+  const [isGameCreated, setIsGameCreated] = useState(false);
+  const [isWaitingForPlayer, setIsWaitingForPlayer] = useState(false);
+  const [grid, setGrid] = useState([]);
+  const [players, setPlayers] = useState([]);
 
-  const createGame = async () => {
-    setLoading(true);
-    setError(null);
+  // Generate a 6x6 grid
+  const generateGrid = () => {
+    const newGrid = [];
+    for (let i = 0; i < 6; i++) {
+      const row = [];
+      for (let j = 0; j < 6; j++) {
+        row.push({ value: 0, owner: 0, maxValue: 100 });
+      }
+      newGrid.push(row);
+    }
+    return newGrid;
+  };
+
+  // Create a new game (add first player)
+  const createGame = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/create-game`, { method: "POST" });
-      if (!response.ok) throw new Error("Failed to create game");
-      const data = await response.json();
-      setGameId(data.gameId);
-      setWaitingForPlayer(true);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+      const newGrid = generateGrid(); // Generate the initial grid
+      const response = await fetch('https://wcxzsrbcpveavqyigoyb.supabase.co/functions/v1/create-game', { // Call the edge function
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ grid: newGrid, players: ['player1'], current_player: 1, game_over: false })
+      });
 
-  const joinGame = () => {
-    if (inputGameId.trim()) {
-      setGameId(inputGameId);
-      setPlayerJoined(true); // Assume joining player is ready
-    }
-  };
+      if (!response.ok) {
+        console.error('Error creating game');
+        return;
+      }
 
-  // Poll the server to check if another player has joined
+      const { gameId } = await response.json(); // Get gameId from the response
+      setGameId(gameId);
+      setIsGameCreated(true);
+      setGrid(newGrid);
+      setPlayers(['player1']); // Add only the first player
+    } catch (error) {
+      console.error('Error creating game:', error);
+    }
+  }, []);
+
+  // Join an existing game (add the second player)
+  const joinGame = useCallback(async (gameId) => {
+    try {
+      const response = await fetch('https://wcxzsrbcpveavqyigoyb.supabase.co/functions/v1/join-game', { // Call the edge function
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gameId, playerId: 'player2' })
+      });
+
+      if (!response.ok) {
+        console.error('Error joining game');
+        return;
+      }
+
+      const { updatedGrid, updatedPlayers } = await response.json(); // Get updated grid and players from the response
+      setPlayers(updatedPlayers); // Add the second player
+      setIsWaitingForPlayer(false);
+      setGrid(updatedGrid); // Fetch and update the grid
+    } catch (error) {
+      console.error('Error joining game:', error);
+    }
+  }, []);
+
   useEffect(() => {
-    if (gameId && waitingForPlayer) {
-      const interval = setInterval(async () => {
-        try {
-          const response = await fetch(`${API_URL}/game-state/${gameId}`);
-          if (!response.ok) throw new Error("Game not found");
-
-          const data = await response.json();
-          if (data.gameState.players >= 2) {  // Assuming backend tracks 'players'
-            setPlayerJoined(true);
-            setWaitingForPlayer(false);
-            clearInterval(interval);
-          }
-        } catch (err) {
-          console.error("Error checking game status:", err);
-        }
-      }, 3000);
-
-      return () => clearInterval(interval);
+    if (gameId) {
+      setIsWaitingForPlayer(true);
+      joinGame(gameId); // Try joining the game once the gameId is available
     }
-  }, [gameId, waitingForPlayer]);
-
-  if (gameId && playerJoined) {
-    return <ChainReactionGame rows={6} cols={6} gameId={gameId} isOffline={false} />;
-  }
-
-  if (isOffline) {
-    return <ChainReactionGame rows={6} cols={6} gameId={null} isOffline={true} />;
-  }
+  }, [gameId, joinGame]);
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen gap-4">
-      <h1 className="text-2xl font-bold">Chain Reaction</h1>
-      {error && <p className="text-red-500">{error}</p>}
-      {waitingForPlayer && (
-        <div className="text-center">
-          <p className="text-lg">Share this Game ID: <span className="font-bold">{gameId}</span></p>
-          <p>Waiting for another player to join...</p>
+    <div className="home-container">
+      <h1>Welcome to the Game</h1>
+      {isGameCreated ? (
+        <div>
+          <h2>Game ID: {gameId}</h2>
+          {isWaitingForPlayer ? (
+            <p>Waiting for the second player to join...</p>
+          ) : (
+            <OnlineGame gameId={gameId} grid={grid} players={players} />
+          )}
         </div>
-      )}
-      {!waitingForPlayer && (
-        <>
-          <button
-            className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
-            onClick={createGame}
-            disabled={loading}
-          >
-            {loading ? "Creating..." : "Create Game"}
-          </button>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Enter Game ID"
-              value={inputGameId}
-              onChange={(e) => setInputGameId(e.target.value)}
-              className="border px-2 py-1"
-            />
-            <button
-              className="bg-green-500 text-white px-4 py-2 rounded disabled:opacity-50"
-              onClick={joinGame}
-              disabled={!inputGameId.trim()}
-            >
-              Join Game
-            </button>
-          </div>
-          <button className="bg-gray-500 text-white px-4 py-2 rounded" onClick={() => setIsOffline(true)}>
-            Play Offline
-          </button>
-        </>
+      ) : (
+        <div>
+          <button onClick={createGame}>Create Game</button>
+        </div>
       )}
     </div>
   );

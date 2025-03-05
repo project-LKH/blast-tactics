@@ -20,7 +20,7 @@ export function OfflineGame({ rows, cols }) {
 
     newGrid[row][col].value++;
     newGrid[row][col].owner = currentPlayer;
-    
+
     setMoves((prev) => ({ ...prev, [currentPlayer]: prev[currentPlayer] + 1 })); // Track move
 
     resolveExplosions(newGrid);
@@ -91,8 +91,8 @@ export function OfflineGame({ rows, cols }) {
     let maxCapacity = 4; // Default for inner cells
 
     // Edge cases for corners
-    if ((row === 0 && col === 0) || (row === 0 && col === cols - 1) || 
-        (row === rows - 1 && col === 0) || (row === rows - 1 && col === cols - 1)) {
+    if ((row === 0 && col === 0) || (row === 0 && col === cols - 1) ||
+      (row === rows - 1 && col === 0) || (row === rows - 1 && col === cols - 1)) {
       return 2; // Corners hold max 2 before explosion
     }
 
@@ -133,7 +133,19 @@ export function OfflineGame({ rows, cols }) {
           ))
         )}
       </div>
-      {gameOver && <div className="game-over"><div className={`winner player${winner}`}>Player {winner} wins!</div></div>}
+      {gameOver && (
+        <div className="game-over">
+          <div className={`winner player${winner}`}>Player {winner} wins!</div>
+          <button
+            className="bg-gray-500 text-white px-4 py-2 mt-4 rounded"
+            onClick={() => window.location.href = "/"}
+          >
+            Return to Home
+          </button>
+        </div>
+      )}
+
+
     </div>
   );
 }
